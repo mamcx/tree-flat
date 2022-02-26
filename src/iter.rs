@@ -1,6 +1,4 @@
 use crate::tree::*;
-use std::cmp::Ordering;
-use std::convert::Infallible;
 
 pub struct TreeIter<'a, T> {
     pos: usize,
@@ -8,13 +6,17 @@ pub struct TreeIter<'a, T> {
 }
 
 impl<'a, T> Iterator for TreeIter<'a, T> {
-    type Item = NodeRef<'a, T>;
+    type Item = Node<'a, T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.pos += 1;
         let id = NodeId(self.pos);
         if let Some(data) = self.tree.get(id) {
-            Some(NodeRef { id, data })
+            Some(Node {
+                id,
+                data,
+                tree: &self.tree,
+            })
         } else {
             None
         }
@@ -30,7 +32,7 @@ pub struct IntoIter<'a, T> {
 }
 
 impl<'a, T> IntoIterator for IntoIter<'a, T> {
-    type Item = NodeRef<'a, T>;
+    type Item = Node<'a, T>;
     type IntoIter = TreeIter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -42,7 +44,7 @@ impl<'a, T> IntoIterator for IntoIter<'a, T> {
 }
 
 impl<'a, T> IntoIterator for &'a Tree<T> {
-    type Item = NodeRef<'a, T>;
+    type Item = Node<'a, T>;
     type IntoIter = TreeIter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {

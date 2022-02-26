@@ -3,7 +3,7 @@
 //! https://aplwiki.com/wiki/Aaron_Hsu
 
 use crate::iter::IntoIter;
-use std::fmt::{write, Display, Formatter};
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct NodeId(pub(crate) usize);
@@ -15,25 +15,25 @@ impl Display for NodeId {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct NodeRef<'a, T: 'a> {
+pub struct Node<'a, T: 'a> {
     /// Node ID.
     pub id: NodeId,
     /// Data.
     pub data: &'a T,
+    /// Tree containing the node.
+    pub(crate) tree: &'a Tree<T>,
 }
 
-impl<T: Display> Display for NodeRef<'_, T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write! {f, "{}", self.data}
+impl<T> Node<'_, T> {
+    pub fn deep(&self) -> usize {
+        self.tree.deep[self.id.0]
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Node<'a, T: 'a> {
-    /// Node ID.
-    id: NodeId,
-    /// Tree containing the node.
-    tree: &'a Tree<T>,
+impl<T: Display> Display for Node<'_, T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write! {f, "{}", self.data}
+    }
 }
 
 #[derive(Debug)]
@@ -71,7 +71,7 @@ impl<'a, T: 'a> NodeMut<'a, T> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct Jump {
     start: usize,
     len: usize,
@@ -80,7 +80,7 @@ pub(crate) struct Jump {
 /// Vec-backed, *flattened*, Tree.
 ///
 /// Always contains at least a root node.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Tree<T> {
     pub(crate) data: Vec<T>,
     pub(crate) deep: Vec<usize>,
@@ -160,7 +160,11 @@ impl<T> Tree<T> {
 
     pub fn node(&mut self, id: NodeId) -> Option<Node<T>> {
         if id.0 < self.data.len() {
-            Some(Node { id, tree: self })
+            Some(Node {
+                id,
+                data: &self.data[id.0],
+                tree: self,
+            })
         } else {
             None
         }
@@ -185,20 +189,30 @@ impl<T> Tree<T> {
         IntoIter { tree: self }
     }
 
+    pub fn as_data(&self) -> &[T] {
+        &self.data
+    }
+
+    pub fn as_deep(&self) -> &[usize] {
+        &self.deep
+    }
+
+    pub fn to_data(self) -> Vec<T> {
+        self.data
+    }
+
     pub fn print(&self, f: &mut Formatter<'_>) -> std::fmt::Result
     where
         T: Display,
     {
         let last = self.data.len() - 1;
         for (pos, x) in self.data.iter().enumerate() {
-            let branch = if pos == last {
+            let branch = if pos == 0 {
+                "."
+            } else if pos == last {
                 "└──"
             } else {
-                if pos == 0 {
-                    "."
-                } else {
-                    "├──"
-                }
+                "├──"
             };
 
             writeln!(f, "{}{}{}", " ".repeat(self.deep[pos]), branch, x)?;
