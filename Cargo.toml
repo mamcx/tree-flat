@@ -1,0 +1,22 @@
+[package]
+name = "tree-flat"
+version = "0.1.0"
+authors = ["Mario Montoya <mamcx@elmalabarista.com>"]
+description = "A simple, id-based arena."
+documentation = "https://docs.rs/tree-flat"
+repository = "https://bitbucket.org/tablam/tablam/"
+readme = "README.md"
+license = "MIT/Apache-2.0"
+keywords = ["database", "interpreter", "language", "relational"]
+categories = ["interpreter", "language", "relational", "tablam"]
+edition = "2018"
+
+[dependencies]
+
+[dev-dependencies]
+criterion =  { version = "0.3", default-features = false, features = ["cargo_bench_support", "html_reports"] }
+ego-tree = "0.6.2"
+
+[[bench]]
+name = "benchmark"
+harness = false
