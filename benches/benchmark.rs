@@ -1,12 +1,12 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use ego_tree::Tree as ETree;
-use tree_flat::tree::Tree;
+use tree_flat::tree::{NodeId, Tree};
 
 #[inline]
 fn flat_create(n: u64) -> Tree<u64> {
     let mut tree = Tree::new();
 
-    let root = tree.add_root(0);
+    let root = tree.root_mut(0);
 
     for i in 1..n {
         tree.add_child(root, i);
@@ -19,6 +19,7 @@ fn flat_create(n: u64) -> Tree<u64> {
 fn ego_create(n: u64) -> ETree<u64> {
     let mut tree = ETree::new(0);
     let mut root = tree.root_mut();
+
     for i in 1..n {
         root.append(i);
     }
