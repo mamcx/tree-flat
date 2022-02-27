@@ -1,22 +1,19 @@
 use crate::tree::*;
+use std::fmt::Debug;
 
 pub struct TreeIter<'a, T> {
     pos: usize,
     tree: &'a Tree<T>,
 }
 
-impl<'a, T> Iterator for TreeIter<'a, T> {
+impl<'a, T: Debug> Iterator for TreeIter<'a, T> {
     type Item = Node<'a, T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.pos += 1;
         let id = NodeId(self.pos);
-        if let Some(data) = self.tree.get(id) {
-            Some(Node {
-                id,
-                data,
-                tree: &self.tree,
-            })
+        self.pos += 1;
+        if self.pos < self.tree.len() {
+            Some(self.tree._make_node(id))
         } else {
             None
         }
@@ -31,7 +28,7 @@ pub struct IntoIter<'a, T> {
     pub(crate) tree: &'a Tree<T>,
 }
 
-impl<'a, T> IntoIterator for IntoIter<'a, T> {
+impl<'a, T: Debug> IntoIterator for IntoIter<'a, T> {
     type Item = Node<'a, T>;
     type IntoIter = TreeIter<'a, T>;
 
@@ -43,7 +40,7 @@ impl<'a, T> IntoIterator for IntoIter<'a, T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a Tree<T> {
+impl<'a, T: Debug> IntoIterator for &'a Tree<T> {
     type Item = Node<'a, T>;
     type IntoIter = TreeIter<'a, T>;
 
