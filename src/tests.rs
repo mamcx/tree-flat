@@ -1,12 +1,23 @@
-// use std::fs::ReadDir;
-// use std::path::PathBuf;
-// use std::{fs, io};
+use crate::prelude::*;
 
-use crate::tree::{NodeId, Tree};
-use ego_tree::Tree as ETree;
-
+// This is the tree used for the tests:
+// . 0
+// ├── 1
+// ├   ├── 2
+// ├── 3
+// ├   ├── 4
+// ├   ├   ├── 5
+// ├   ├── 6
+// ├── 7
+// ├   ├── 8
+// ├   ├   ├── 9
+// ├   ├   ├── 10
+// ├   ├── 11
+// ├   ├   ├── 12
+// ├   ├   ├── 13
+// └──── 14
 fn build() -> Tree<i32> {
-    let mut tree = Tree::with_capacity(0, 5);
+    let mut tree = Tree::with_capacity(0, 15);
 
     let mut root = tree.root_mut();
     root.push(1).push(2);
@@ -29,16 +40,34 @@ fn build() -> Tree<i32> {
     tree
 }
 
-#[test]
-fn ego_create() {
-    let mut tree = ETree::new(0);
-    let mut root = tree.root_mut();
+fn sub_level(mut parent: NodeMut<usize>, num: &mut usize, count: usize) {
+    if parent.deep() > 10 {
+        return;
+    }
+    *num += 1;
+    let mut l = parent.push(*num);
+    for _x in 0..=count {
+        *num += 1;
+        l.push(*num);
+    }
+    sub_level(l, num, count);
+    *num += 1;
+}
 
-    for i in 1..10 {
-        root.append(i);
+#[test]
+fn create2() {
+    let n = 1000;
+    let mut tree = Tree::with_capacity(0, n);
+    let mut root = tree.root_mut();
+    let mut num = 1;
+    for i in 0..=n {
+        let l1 = root.push(num);
+
+        sub_level(l1, &mut num, i);
     }
 
-    println!("{tree:?}");
+    dbg!(tree.len());
+    //println!("{tree}");
 }
 
 #[test]
@@ -67,6 +96,8 @@ fn folder_mimic() {
         ["Users", "jhon_doe", "file1.rs", "file2.rs", "jane_doe", "cat.jpg",]
     );
     assert_eq!(tree.as_deep(), [0, 1, 2, 2, 1, 2,]);
+    assert_eq!(tree.as_parents(), [0, 0, 1, 1, 0, 4,]);
+    println!("{tree}");
 }
 
 //Confirm the data is iterated in pre-order (ie: as inserted)
@@ -82,48 +113,86 @@ fn iter() {
     assert_eq!(data, tree.data);
 }
 
-#[test]
-fn childs() {
-    let tree = build();
-    let child_of = 1;
-    let parent = NodeId(child_of);
+fn make_childs(tree: &Tree<i32>, of_parent: usize) -> Vec<i32> {
+    let parent = NodeId(of_parent);
 
     let node = tree.node(parent).unwrap();
 
-    for x in node.iter_childrens() {
-        dbg!(x);
-    }
+    node.childrens().map(|x| *x.data).collect()
 }
 
-//
-// fn walk_dir(tree: &mut Tree<String>, parent: NodeId, of: ReadDir) -> io::Result<()> {
-//     dbg!(parent);
-//     for entry in of {
-//         let entry = entry?;
-//         let path = entry.path();
-//         let metadata = fs::metadata(&path)?;
-//         if metadata.is_dir() {
-//             let root = tree.push(parent, path.to_str().unwrap().into());
-//             dbg!("dir", root, parent);
-//             walk_dir(tree, root, fs::read_dir(path)?)?;
-//         } else {
-//             dbg!("file");
-//             tree.push(parent, path.to_str().unwrap().into());
-//         }
-//     }
-//
-//     Ok(())
-// }
-//
-// #[test]
-// fn files() -> io::Result<()> {
-//     let mut tree = Tree::with_capacity(3);
-//
-//     let p: PathBuf = "/Users/mamcx/Proyectos/basura/eldiro/crates/ast".into();
-//     let root = tree.root_mut(p.to_str().unwrap().into());
-//     walk_dir(&mut tree, root, fs::read_dir(p.clone())?)?;
-//     dbg!(&tree.deep);
-//     println!("{tree}");
-//
-//     Ok(())
-// }
+#[test]
+fn childs() {
+    let tree = build();
+    //println!("{tree}");
+    let childs = make_childs(&tree, 0);
+    assert_eq!(&tree.data[1..], childs.as_slice());
+
+    let childs = make_childs(&tree, 1);
+    assert_eq!(&[2], childs.as_slice());
+
+    let childs = make_childs(&tree, 3);
+    assert_eq!(&[4, 5, 6], childs.as_slice());
+
+    let childs = make_childs(&tree, 4);
+    assert_eq!(&[5], childs.as_slice());
+
+    let childs = make_childs(&tree, 7);
+    assert_eq!(&[8, 9, 10, 11, 12, 13, 14], childs.as_slice());
+
+    let childs = make_childs(&tree, 14);
+    assert!(childs.is_empty());
+}
+
+fn make_parents(tree: &Tree<i32>, of_child: usize) -> Vec<i32> {
+    let child = NodeId(of_child);
+
+    let node = tree.node(child).unwrap();
+
+    node.parents().map(|x| *x.data).collect()
+}
+
+#[test]
+fn parents() {
+    let tree = build();
+    //println!("{tree}");
+    let parents = make_parents(&tree, 0);
+    assert_eq!(&tree.data[1..1], parents.as_slice());
+
+    let parents = make_parents(&tree, 1);
+    assert_eq!(&[0], parents.as_slice());
+
+    let parents = make_parents(&tree, 4);
+    assert_eq!(&[3, 0], parents.as_slice());
+
+    let parents = make_parents(&tree, 10);
+    assert_eq!(&[8, 7, 0], parents.as_slice());
+
+    let parents = make_parents(&tree, 14);
+    assert_eq!(&[7, 0], parents.as_slice());
+}
+
+fn make_siblings(tree: &Tree<i32>, sibling_of: usize) -> Vec<i32> {
+    let sibling = NodeId(sibling_of);
+
+    let node = tree.node(sibling).unwrap();
+
+    node.siblings().map(|x| *x.data).collect()
+}
+
+#[test]
+fn siblings() {
+    let tree = build();
+    //println!("{tree}");
+    let siblings = make_siblings(&tree, 0);
+    assert_eq!(&tree.data[1..1], siblings.as_slice());
+
+    let siblings = make_siblings(&tree, 1);
+    assert_eq!(&[3, 7], siblings.as_slice());
+
+    let siblings = make_siblings(&tree, 2);
+    assert_eq!(&[4, 6, 8, 11, 14], siblings.as_slice());
+
+    let siblings = make_siblings(&tree, 10);
+    assert_eq!(&[5, 9, 12, 13], siblings.as_slice());
+}

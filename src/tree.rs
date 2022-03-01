@@ -1,94 +1,8 @@
 #![allow(dead_code)]
-use crate::iter::{ChildrenIter, IntoIter, ParentIter};
+use crate::iter::IntoIter;
 use std::fmt::{Debug, Display, Formatter};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct NodeId(pub(crate) usize);
-
-impl Display for NodeId {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write! {f, "NodeId({})", self.0}
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Node<'a, T: 'a> {
-    /// Node ID.
-    pub id: NodeId,
-    /// Data.
-    pub data: &'a T,
-    /// Tree containing the node.
-    pub(crate) tree: &'a Tree<T>,
-}
-
-impl<T: Debug> Node<'_, T> {
-    pub fn deep(&self) -> usize {
-        self.tree.deep[self.id.0]
-    }
-
-    pub fn iter_parents(&self) -> ParentIter<'_, T> {
-        ParentIter {
-            parent: self.tree.parent[self.id.0],
-            node: self.id,
-            tree: &self.tree,
-        }
-    }
-
-    pub fn iter_childrens(&self) -> ChildrenIter<'_, T> {
-        ChildrenIter::new(self.id, self.tree)
-    }
-}
-
-impl<T: Debug> Debug for Node<'_, T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write! {f, "{:?}:{:?}", self.id, self.data}
-    }
-}
-
-impl<T: Display> Display for Node<'_, T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write! {f, "{}", self.data}
-    }
-}
-
-#[derive(Debug)]
-pub struct NodeMut<'a, T: 'a> {
-    /// Node ID.
-    id: NodeId,
-    /// Tree containing the node.
-    tree: &'a mut Tree<T>,
-}
-
-impl<'a, T: Debug + 'a> NodeMut<'a, T> {
-    pub fn deep(&self) -> usize {
-        self.tree.deep[self.id.0 - 1] + 1
-    }
-
-    pub fn push(&mut self, data: T) -> NodeMut<T>
-    where
-        T: Debug,
-    {
-        let deep = self.deep();
-
-        let id = self.tree._add(data, deep, self.id);
-        NodeMut {
-            id,
-            tree: self.tree,
-        }
-    }
-
-    // pub fn push_many(&mut self, data: &[T]) -> NodeMut<T>
-    // where
-    //     T: Clone,
-    // {
-    //     let deep = self.deep();
-    //     let id = self.tree._add_many(data, deep);
-    //     NodeMut {
-    //         id,
-    //         tree: self.tree,
-    //     }
-    // }
-}
+use crate::prelude::*;
 
 /// Vec-backed, *flattened*, Tree.
 ///
@@ -115,12 +29,7 @@ impl<T: Debug> Tree<T> {
         t
     }
 
-    pub fn get(&self, node: NodeId) -> Option<&T> {
-        let idx = node.0;
-        self.data.get(idx)
-    }
-
-    fn _add(&mut self, data: T, deep: usize, parent: NodeId) -> NodeId {
+    pub(crate) fn _add(&mut self, data: T, deep: usize, parent: NodeId) -> NodeId {
         let parent = if parent.0 == 0 { 0 } else { parent.0 - 1 };
 
         self.data.push(data);
@@ -128,45 +37,6 @@ impl<T: Debug> Tree<T> {
         self.parent.push(parent);
 
         NodeId(self.data.len())
-    }
-
-    // fn _add_many(&mut self, data: &[T], deep: usize) -> NodeId
-    // where
-    //     T: Clone,
-    // {
-    //     let mut deeps = vec![deep; data.len()];
-    //     self.data.extend_from_slice(data);
-    //     self.deep.append(&mut deeps);
-    //
-    //     self._add_jump(deep)
-    // }
-
-    fn parent(&self, _id: Node<T>) -> Option<Node<T>> {
-        unimplemented!()
-    }
-
-    pub(crate) fn is_child(&self, parent: NodeId, of: NodeId) -> bool {
-        //dbg!(parent, of);
-        if parent == of {
-            return true;
-        }
-        if parent > of {
-            return false;
-        }
-        if let Some(p) = self.parent.get(of.0) {
-            //dbg!(parent, p);
-            if parent.0 == *p {
-                true
-            } else {
-                if *p == 0 {
-                    false
-                } else {
-                    self.is_child(parent, NodeId(*p - 1))
-                }
-            }
-        } else {
-            false
-        }
     }
 
     pub(crate) fn _make_node(&self, id: NodeId) -> Node<T> {
@@ -177,6 +47,10 @@ impl<T: Debug> Tree<T> {
         }
     }
 
+    pub(crate) fn _make_node_mut(&mut self, id: NodeId) -> NodeMut<T> {
+        NodeMut { id, tree: self }
+    }
+
     pub fn node(&self, id: NodeId) -> Option<Node<T>> {
         if id.0 < self.data.len() {
             Some(self._make_node(id))
@@ -185,13 +59,21 @@ impl<T: Debug> Tree<T> {
         }
     }
 
-    pub fn root_mut(&mut self) -> NodeMut<T> {
-        NodeMut {
-            id: NodeId(1),
-            tree: self,
+    pub fn node_mut(&mut self, id: NodeId) -> Option<NodeMut<T>> {
+        if id.0 < self.data.len() {
+            Some(self._make_node_mut(id))
+        } else {
+            None
         }
     }
 
+    pub fn root_mut(&mut self) -> NodeMut<T> {
+        self._make_node_mut(NodeId(1))
+    }
+
+    pub fn push_with_deep(&mut self, data: T, deep: usize, parent: NodeId) -> NodeId {
+        self._add(data, deep, parent)
+    }
     pub fn len(&self) -> usize {
         self.data.len()
     }
@@ -210,6 +92,10 @@ impl<T: Debug> Tree<T> {
 
     pub fn as_deep(&self) -> &[usize] {
         &self.deep
+    }
+
+    pub fn as_parents(&self) -> &[usize] {
+        &self.parent
     }
 
     pub fn to_data(self) -> Vec<T> {

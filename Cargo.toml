@@ -2,20 +2,22 @@
 name = "tree-flat"
 version = "0.1.0"
 authors = ["Mario Montoya <mamcx@elmalabarista.com>"]
-description = "A simple, id-based arena."
+description = "TreeFlat is the simplest way to build & traverse a pre-order Tree for Rust."
 documentation = "https://docs.rs/tree-flat"
-repository = "https://bitbucket.org/tablam/tablam/"
+repository = "https://github.com/mamcx/tree-flat"
 readme = "README.md"
 license = "MIT/Apache-2.0"
-keywords = ["database", "interpreter", "language", "relational"]
-categories = ["interpreter", "language", "relational", "tablam"]
+keywords = ["tree", "vec", "apl", "flat"]
+categories = ["data-structures"]
 edition = "2018"
+exclude = ["/.github"]
 
 [dependencies]
 
 [dev-dependencies]
 criterion =  { version = "0.3", default-features = false, features = ["cargo_bench_support", "html_reports"] }
 ego-tree = "0.6.2"
+walkdir = "2.3.2"
 
 [[bench]]
 name = "benchmark"

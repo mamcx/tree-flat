@@ -1,5 +1,6 @@
-use crate::tree::*;
 use std::fmt::Debug;
+
+use crate::prelude::*;
 
 pub struct TreeIter<'a, T> {
     pos: usize,
@@ -35,7 +36,7 @@ impl<'a, T: Debug> IntoIterator for IntoIter<'a, T> {
     fn into_iter(self) -> Self::IntoIter {
         TreeIter {
             pos: 0,
-            tree: &self.tree,
+            tree: self.tree,
         }
     }
 }
@@ -45,10 +46,7 @@ impl<'a, T: Debug> IntoIterator for &'a Tree<T> {
     type IntoIter = TreeIter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        TreeIter {
-            pos: 0,
-            tree: &self,
-        }
+        TreeIter { pos: 0, tree: self }
     }
 }
 
@@ -84,13 +82,10 @@ pub struct ChildrenIter<'a, T> {
 
 impl<'a, T> ChildrenIter<'a, T> {
     pub fn new(parent: NodeId, tree: &'a Tree<T>) -> Self {
-        let (pos, range) = if parent.0 == 0 {
-            (1, tree.parent.as_slice())
-        } else {
-            (0, &tree.parent[(parent.0 + 1)..])
-        };
+        let range = &tree.parent[(parent.0 + 1)..];
+        dbg!(range);
         ChildrenIter {
-            pos,
+            pos: 1,
             parent,
             range,
             tree,
@@ -104,26 +99,58 @@ impl<'a, T: Debug> Iterator for ChildrenIter<'a, T> {
     fn next(&mut self) -> Option<Self::Item> {
         //dbg!(self.pos, self.range.len());
         if self.pos <= self.range.len() {
-            if self.parent.0 == 0 {
-                self.pos += 1;
-                return Some(self.tree._make_node(NodeId(self.pos - 2)));
+            let level = self.tree.deep[self.parent.0];
+            let node = NodeId(self.pos + self.parent.0);
+            let level_child = self.tree.deep[node.0];
+            //dbg!(self.pos, level, node.0, level_child);
+            self.pos += 1;
+
+            if level_child > level {
+                Some(self.tree._make_node(node))
+            } else {
+                None
             }
-            for p in &self.range[self.pos..] {
-                //dbg!(p, self.parent.0);
-                let p = *p;
-                self.pos += 1;
-                if p == 0 {
-                    break;
-                }
-                if p < self.parent.0 {
-                    continue;
-                }
-                let node = NodeId(p);
-                if self.tree.is_child(self.parent, node) {
-                    return Some(self.tree._make_node(NodeId(self.pos + self.parent.0)));
-                }
-            }
+        } else {
+            None
         }
-        None
+    }
+}
+
+#[derive(Debug)]
+pub struct SiblingsIter<'a, T> {
+    pub(crate) pos: usize,
+    pub(crate) level: usize,
+    pub(crate) node: NodeId,
+    pub(crate) tree: &'a Tree<T>,
+}
+
+impl<'a, T: Debug> Iterator for SiblingsIter<'a, T> {
+    type Item = Node<'a, T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        //dbg!(self.pos, self.range.len());
+        if self.pos <= self.tree.len() {
+            let start = self.pos;
+            if let Some(pos) =
+                self.tree.deep[start..]
+                    .iter()
+                    .enumerate()
+                    .find_map(|(pos, level)| {
+                        let idx = self.pos + pos;
+                        if *level == self.level && self.node.0 != idx {
+                            Some(idx)
+                        } else {
+                            None
+                        }
+                    })
+            {
+                self.pos = pos + 1;
+                Some(self.tree._make_node(NodeId(pos)))
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 }
