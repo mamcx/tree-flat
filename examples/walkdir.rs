@@ -2,7 +2,7 @@ use std::ffi::OsStr;
 use std::fs::ReadDir;
 use std::path::PathBuf;
 use std::{env, fs, io};
-use walkdir::{DirEntry, WalkDir};
+use walkdir::WalkDir;
 
 use tree_flat::prelude::*;
 
@@ -58,7 +58,7 @@ fn walk_dir(path: &str) -> io::Result<Tree<String>> {
         if entry.depth() == 0 {
             continue;
         }
-        let node_id = tree.push_with_deep(
+        let node_id = tree.push_with_level(
             path_to_str(entry.path().to_path_buf()),
             entry.depth(),
             parent,
@@ -79,7 +79,7 @@ fn main() -> io::Result<()> {
     //to how it feels recursively, adding .childs to .parent
     let tree1 = walk_dir_manual(path)?;
 
-    //Using walkdir crate, that traverse flat and give a .deep, so is similar
+    //Using walkdir crate, that traverse flat and give a .level, so is similar
     //to how it feels to push as vectors
     let tree2 = walk_dir(path)?;
 

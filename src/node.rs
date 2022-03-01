@@ -10,7 +10,7 @@ use crate::prelude::*;
 /// Is not checked the [NodeId] was not from *another* tree.
 ///
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct NodeId(pub(crate) usize);
+pub struct NodeId(pub usize);
 
 impl Display for NodeId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -30,8 +30,8 @@ pub struct Node<'a, T: 'a> {
 }
 
 impl<T: Debug> Node<'_, T> {
-    pub fn deep(&self) -> usize {
-        self.tree.deep[self.id.0]
+    pub fn level(&self) -> usize {
+        self.tree.level[self.id.0]
     }
     pub fn parent(&self) -> usize {
         self.tree.parent[self.id.0]
@@ -46,8 +46,8 @@ impl<T: Debug> Node<'_, T> {
         }
     }
 
-    /// An [Iterator] of the childrens from this [Node].
-    pub fn childrens(&self) -> ChildrenIter<'_, T> {
+    /// An [Iterator] of the children from this [Node].
+    pub fn children(&self) -> ChildrenIter<'_, T> {
         ChildrenIter::new(self.id, self.tree)
     }
 
@@ -55,7 +55,7 @@ impl<T: Debug> Node<'_, T> {
     pub fn siblings(&self) -> SiblingsIter<'_, T> {
         SiblingsIter {
             pos: 0,
-            level: self.deep(),
+            level: self.level(),
             node: self.id,
             tree: self.tree,
         }
@@ -84,32 +84,19 @@ pub struct NodeMut<'a, T: 'a> {
 }
 
 impl<'a, T: Debug + 'a> NodeMut<'a, T> {
-    pub fn deep(&self) -> usize {
-        self.tree.deep[self.id.0 - 1] + 1
+    pub fn level(&self) -> usize {
+        self.tree.level[self.id.0 - 1] + 1
     }
 
+    /// Create a new [Node<T>], record the parent & the loop, and continue to
+    /// return [NodeMut<T>] so you can add more levelly
     pub fn push(&mut self, data: T) -> NodeMut<T>
     where
         T: Debug,
     {
-        let deep = self.deep();
+        let level = self.level();
 
-        let id = self.tree._add(data, deep, self.id);
-        NodeMut {
-            id,
-            tree: self.tree,
-        }
+        let id = self.tree.push_with_level(data, level, self.id);
+        self.tree._make_node_mut(id)
     }
-
-    // pub fn push_many(&mut self, data: &[T]) -> NodeMut<T>
-    // where
-    //     T: Clone,
-    // {
-    //     let deep = self.deep();
-    //     let id = self.tree._add_many(data, deep);
-    //     NodeMut {
-    //         id,
-    //         tree: self.tree,
-    //     }
-    // }
 }

@@ -15,7 +15,7 @@ use crate::prelude::*;
 // ├   ├── 11
 // ├   ├   ├── 12
 // ├   ├   ├── 13
-// └──── 14
+// └────── 14
 fn build() -> Tree<i32> {
     let mut tree = Tree::with_capacity(0, 15);
 
@@ -41,7 +41,7 @@ fn build() -> Tree<i32> {
 }
 
 fn sub_level(mut parent: NodeMut<usize>, num: &mut usize, count: usize) {
-    if parent.deep() > 10 {
+    if parent.level() > 10 {
         return;
     }
     *num += 1;
@@ -55,9 +55,9 @@ fn sub_level(mut parent: NodeMut<usize>, num: &mut usize, count: usize) {
 }
 
 #[test]
-fn create2() {
-    let n = 1000;
-    let mut tree = Tree::with_capacity(0, n);
+fn create_hierachy() {
+    let n = 25;
+    let mut tree = Tree::new(0);
     let mut root = tree.root_mut();
     let mut num = 1;
     for i in 0..=n {
@@ -67,7 +67,7 @@ fn create2() {
     }
 
     dbg!(tree.len());
-    //println!("{tree}");
+    println!("{tree}");
 }
 
 #[test]
@@ -75,28 +75,8 @@ fn create() {
     let tree = build();
     assert_eq!(tree.len(), 15);
     assert_eq!(tree.data.len(), 15);
-    assert_eq!(tree.deep.len(), 15);
+    assert_eq!(tree.level.len(), 15);
     assert_eq!(tree.parent.len(), 15);
-}
-
-#[test]
-fn folder_mimic() {
-    let mut tree = Tree::with_capacity("Users", 5);
-
-    let mut root = tree.root_mut();
-
-    let mut child = root.push("jhon_doe");
-    child.push("file1.rs");
-    child.push("file2.rs");
-    let mut child = root.push("jane_doe");
-    child.push("cat.jpg");
-
-    assert_eq!(
-        tree.as_data(),
-        ["Users", "jhon_doe", "file1.rs", "file2.rs", "jane_doe", "cat.jpg",]
-    );
-    assert_eq!(tree.as_deep(), [0, 1, 2, 2, 1, 2,]);
-    assert_eq!(tree.as_parents(), [0, 0, 1, 1, 0, 4,]);
     println!("{tree}");
 }
 
@@ -118,7 +98,7 @@ fn make_childs(tree: &Tree<i32>, of_parent: usize) -> Vec<i32> {
 
     let node = tree.node(parent).unwrap();
 
-    node.childrens().map(|x| *x.data).collect()
+    node.children().map(|x| *x.data).collect()
 }
 
 #[test]

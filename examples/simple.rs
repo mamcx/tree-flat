@@ -18,14 +18,14 @@ fn main() {
         tree.as_data(),
         ["Users", "jhon_doe", "file1.rs", "file2.rs", "jane_doe", "cat.jpg",]
     );
-    assert_eq!(tree.as_deep(), [0, 1, 2, 2, 1, 2,]);
+    assert_eq!(tree.as_level(), [0, 1, 2, 2, 1, 2,]);
     assert_eq!(tree.as_parents(), [0, 0, 1, 1, 0, 4,]);
 
     println!("{}", &tree);
 
     //Iteration is in pre-order, as was build:
     for path in &tree {
-        let level = path.deep();
+        let level = path.level();
         let parent = path.parent();
         println!("LEVEL {} / PARENT: {} : {}", level, parent, path);
     }

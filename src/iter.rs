@@ -83,7 +83,7 @@ pub struct ChildrenIter<'a, T> {
 impl<'a, T> ChildrenIter<'a, T> {
     pub fn new(parent: NodeId, tree: &'a Tree<T>) -> Self {
         let range = &tree.parent[(parent.0 + 1)..];
-        dbg!(range);
+        //dbg!(range);
         ChildrenIter {
             pos: 1,
             parent,
@@ -99,9 +99,9 @@ impl<'a, T: Debug> Iterator for ChildrenIter<'a, T> {
     fn next(&mut self) -> Option<Self::Item> {
         //dbg!(self.pos, self.range.len());
         if self.pos <= self.range.len() {
-            let level = self.tree.deep[self.parent.0];
+            let level = self.tree.level[self.parent.0];
             let node = NodeId(self.pos + self.parent.0);
-            let level_child = self.tree.deep[node.0];
+            let level_child = self.tree.level[node.0];
             //dbg!(self.pos, level, node.0, level_child);
             self.pos += 1;
 
@@ -132,7 +132,7 @@ impl<'a, T: Debug> Iterator for SiblingsIter<'a, T> {
         if self.pos <= self.tree.len() {
             let start = self.pos;
             if let Some(pos) =
-                self.tree.deep[start..]
+                self.tree.level[start..]
                     .iter()
                     .enumerate()
                     .find_map(|(pos, level)| {
