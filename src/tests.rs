@@ -55,8 +55,8 @@ fn sub_level(mut parent: NodeMut<usize>, num: &mut usize, count: usize) {
 }
 
 #[test]
-fn create_hierachy() {
-    let n = 25;
+fn create_hierarchy() {
+    let n = 100;
     let mut tree = Tree::new(0);
     let mut root = tree.root_mut();
     let mut num = 1;

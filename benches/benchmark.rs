@@ -38,7 +38,7 @@ fn _get_parent_node(run: u64) -> u64 {
     }
 }
 
-// Generate a tree with level levels (this is with RUN=0)
+// Generate a tree with 10 levels (this is with RUN=0)
 // . 0
 // ├── 1
 // ├   ├── 2

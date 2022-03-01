@@ -7,14 +7,13 @@ this is the tree for you.
 
 **No extra fluff**, just a simple & performant one-trick pony.
 
-Note: The tree depends in the build order, so is not possible to re-order the tree
-(changing parents or levels) in different order. So, for example, you can't add
+Note: The tree depends on the build order, so is not possible to re-order the tree
+(changing parents or levels) in a different order. So, for example, you can't add
 a branch later to one in the *middle* (only can add *after* the end...).
 
 ## How it works
 
-Instead of creating an Tree of Node pointers, nested enums, or nested `Arena`-based `ids`,
-it just stores the representation of a Tree like:
+Instead of creating a Tree of Node pointers, nested enums, or nested `Arena`-based `ids`, it just stores the representation of a Tree:
 
 ```bash
 . Users
@@ -25,7 +24,7 @@ it just stores the representation of a Tree like:
 └────── cat.jpg
 ```
 
-... flattened in pre-order on 3 vectors, that store the data, the level/level & the parent:
+... flattened in pre-order on 3 vectors, that store the data, the level & the parent:
 
 | DATA:  | Users | jhon_doe | file1.rs | file2.rs | jane_doe | cat.jpg |
 |--------|-------|----------|----------|----------|----------|---------|
@@ -34,14 +33,29 @@ it just stores the representation of a Tree like:
 
 This allows for the performance of Rust `Vec`, on the most common operations
 (critically: Push items + Iterate), and very efficient iterations of
-`node::Node::parents`/`node::Node::children`/`node::Node::siblings`, because
-it just traverse the flat vectors.
+`node::Node::parents`/`node::Node::children`/`node::Node::siblings`, because it just traverses the flat vectors.
 
-The iterators exploit this observations:
+The iterators exploit these observations:
 
 * The children are at the right/up of the parent
 * The parents are at the left/down of the children
 * The siblings are all that share the same level
+
+So this means that in the case of navigating the children of `jhon_doe`:
+
+```bash
+. Users					  ⇡ parents
+├── jhon_doe			   Index: 1, Level: 1
+					           ⇩ children start at 
+							jhon_doe + 1,
+							level 	 > jhon_doe
+├   ├── file1.rs				: Level 2 is child!
+├   ├── file2.rs				: Level 2 is child!
+├── jane_doe			        : Level 1 is below, stop!
+└────── cat.jpg
+```
+
+With this, instead of searching a potentially large array, it jumps directly after the node and iterates as long the nodes are above it!.
 
 # Examples
 ```rust
@@ -68,12 +82,15 @@ assert_eq!(tree.as_parents(), [0, 0, 1, 1, 0, 4,]);
 //Pretty print the tree
 println!("{}", tree);
 
-//Iterations is as inserted:
+// Iterations is as inserted:
 for f in &tree {
   dbg!(f);
 }
 
 ```
+
+More info at my [blog](https://www.elmalabarista.com/blog/2022-flat-tree/)  .
+
 - - - - - -
 
 Inspired by the talk:
@@ -87,7 +104,7 @@ Contributions, issues, and feature requests are welcome!
 
 ## Show your support
 
-Give a ⭐️ if you like this project! or to help make my projects a reality consider donate or sponsor with a subscription in [https://www.buymeacoffee.com/mamcx](https://www.buymeacoffee.com/mamcx).
+Give a ⭐️ if you like this project! or wanna help make my projects a reality consider donating or sponsoring my work with a subscription in [https://www.buymeacoffee.com/mamcx](https://www.buymeacoffee.com/mamcx).
 
 ## 📝 License
 
