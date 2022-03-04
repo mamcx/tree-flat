@@ -26,10 +26,10 @@ Instead of creating a Tree of Node pointers, nested enums, or nested `Arena`-bas
 
 ... flattened in pre-order on 3 vectors, that store the data, the level & the parent:
 
-| DATA:  | Users | jhon_doe | file1.rs | file2.rs | jane_doe | cat.jpg |
-|--------|-------|----------|----------|----------|----------|---------|
-| level:  | 0     | 1        | 2        | 2        | 1        | 2       |
-| PARENT:| 0     | 0        | 1        | 1        | 0        | 4       |
+| DATA:   | Users | jhon_doe | file1.rs | file2.rs | jane_doe | cat.jpg |
+|---------|-------|----------|----------|----------|----------|---------|
+| LEVEl:  | 0     | 1        | 2        | 2        | 1        | 2       |
+| PARENT: | 0     | 0        | 1        | 1        | 0        | 4       |
 
 This allows for the performance of Rust `Vec`, on the most common operations
 (critically: Push items + Iterate), and very efficient iterations of
