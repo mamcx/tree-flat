@@ -23,11 +23,11 @@
 //! └────── cat.jpg
 //! ```
 //!
-//! ... flattened in pre-order on 3 [Vec], that store the data, the level/level and the parent:
+//! ... flattened in pre-order on 3 [Vec], that store the data, the level/deep and the parent:
 //!
 //! | DATA:  | Users | jhon_doe | file1.rs | file2.rs | jane_doe | cat.jpg |
 //! |--------|-------|----------|----------|----------|----------|---------|
-//! | level:  | 0     | 1        | 2        | 2        | 1        | 2       |
+//! | LEVEL:  | 0     | 1        | 2        | 2        | 1        | 2       |
 //! | PARENT:| 0     | 0        | 1        | 1        | 0        | 4       |
 //!
 //! This allows for the performance of [Vec], on the most common operations

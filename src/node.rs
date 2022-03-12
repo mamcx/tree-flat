@@ -1,4 +1,5 @@
 use std::fmt::{Debug, Display, Formatter};
+use std::num::NonZeroUsize;
 
 use crate::iter::*;
 use crate::prelude::*;
@@ -7,14 +8,36 @@ use crate::prelude::*;
 ///
 /// # Important:
 ///
-/// Is not checked the [NodeId] was not from *another* tree.
+/// Is not checked that the [NodeId] was not from *another* tree.
 ///
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct NodeId(pub usize);
+pub struct NodeId(NonZeroUsize);
+
+impl NodeId {
+    pub fn from_index(n: usize) -> Self {
+        NodeId(NonZeroUsize::new(n + 1).unwrap())
+    }
+
+    pub fn to_index(self) -> usize {
+        self.0.get() - 1
+    }
+}
 
 impl Display for NodeId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write! {f, "NodeId({})", self.0}
+    }
+}
+
+impl From<usize> for NodeId {
+    fn from(x: usize) -> Self {
+        NodeId::from_index(x)
+    }
+}
+
+impl From<NodeId> for usize {
+    fn from(x: NodeId) -> Self {
+        x.to_index()
     }
 }
 
@@ -31,10 +54,10 @@ pub struct Node<'a, T: 'a> {
 
 impl<T: Debug> Node<'_, T> {
     pub fn level(&self) -> usize {
-        self.tree.level[self.id.0]
+        self.tree.level[self.id.to_index()]
     }
     pub fn parent(&self) -> usize {
-        self.tree.parent[self.id.0]
+        self.tree.parent[self.id.to_index()]
     }
 
     /// An [Iterator] of the parents from this [Node].
@@ -80,23 +103,32 @@ pub struct NodeMut<'a, T: 'a> {
     /// Node ID.
     pub id: NodeId,
     /// Tree containing the node.
-    pub(crate) tree: &'a mut Tree<T>,
+    pub tree: &'a mut Tree<T>,
 }
 
 impl<'a, T: Debug + 'a> NodeMut<'a, T> {
-    pub fn level(&self) -> usize {
-        self.tree.level[self.id.0 - 1] + 1
+    pub fn get_level(&self) -> usize {
+        self.tree.get_level(self.id)
     }
 
     /// Create a new [Node<T>], record the parent & the loop, and continue to
-    /// return [NodeMut<T>] so you can add more levelly
+    /// return [NodeMut<T>] so you can add more in a builder pattern
     pub fn push(&mut self, data: T) -> NodeMut<T>
     where
         T: Debug,
     {
-        let level = self.level();
-
-        let id = self.tree.push_with_level(data, level, self.id);
+        let id = self.append(data);
         self.tree._make_node_mut(id)
+    }
+
+    /// Create a new [Node<T>], record the parent & the loop, and
+    /// return [NodeId]
+    pub fn append(&mut self, data: T) -> NodeId
+    where
+        T: Debug,
+    {
+        let level = self.get_level() + 1;
+
+        self.tree.push_with_level(data, level, self.id)
     }
 }

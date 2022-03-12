@@ -41,7 +41,7 @@ fn build() -> Tree<i32> {
 }
 
 fn sub_level(mut parent: NodeMut<usize>, num: &mut usize, count: usize) {
-    if parent.level() > 10 {
+    if parent.get_level() > 10 {
         return;
     }
     *num += 1;
@@ -77,6 +77,39 @@ fn create() {
     assert_eq!(tree.data.len(), 15);
     assert_eq!(tree.level.len(), 15);
     assert_eq!(tree.parent.len(), 15);
+    assert_eq!(tree.node(14.into()).unwrap().data, &14);
+    assert!(tree.node(15.into()).is_none());
+    println!("{tree}");
+}
+
+#[test]
+fn create_push_direct() {
+    let mut tree1 = Tree::with_capacity(0, 3);
+    let mut tree2 = tree1.clone();
+
+    tree1.root_mut().push(1).push(3);
+    tree1.root_mut().push(2);
+    println!("{tree1}");
+    let parent = tree2.push_with_level(1, 1, 0.into());
+    tree2.push_with_level(3, 2, parent);
+    tree2.push_with_level(2, 1, 0.into());
+    println!("{tree2}");
+
+    assert_eq!(tree1, tree2);
+}
+
+#[test]
+fn create_manual() {
+    let mut tree = Tree::new(0);
+
+    let mut root = tree.root_mut();
+    root.push(1);
+
+    println!("{tree}");
+
+    let mut tree = Tree::new(0);
+    let parent = tree.root_mut().id;
+    tree.push_with_level(1, 1, parent);
     println!("{tree}");
 }
 
@@ -94,7 +127,7 @@ fn iter() {
 }
 
 fn make_childs(tree: &Tree<i32>, of_parent: usize) -> Vec<i32> {
-    let parent = NodeId(of_parent);
+    let parent = of_parent.into();
 
     let node = tree.node(parent).unwrap();
 
@@ -106,7 +139,7 @@ fn childs() {
     let tree = build();
     //println!("{tree}");
     let childs = make_childs(&tree, 0);
-    assert_eq!(&tree.data[1..], childs.as_slice());
+    assert_eq!(&tree.data[1..], childs.as_slice(), "of root");
 
     let childs = make_childs(&tree, 1);
     assert_eq!(&[2], childs.as_slice());
@@ -125,7 +158,7 @@ fn childs() {
 }
 
 fn make_parents(tree: &Tree<i32>, of_child: usize) -> Vec<i32> {
-    let child = NodeId(of_child);
+    let child = of_child.into();
 
     let node = tree.node(child).unwrap();
 
@@ -153,7 +186,7 @@ fn parents() {
 }
 
 fn make_siblings(tree: &Tree<i32>, sibling_of: usize) -> Vec<i32> {
-    let sibling = NodeId(sibling_of);
+    let sibling = sibling_of.into();
 
     let node = tree.node(sibling).unwrap();
 

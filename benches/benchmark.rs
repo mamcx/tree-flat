@@ -143,14 +143,14 @@ mod flat {
 
     pub(crate) fn iter_children(run: u64, t: Tree<u64>) {
         let idx = _get_child_node(run);
-        let node = t.node(NodeId(idx as usize)).unwrap();
+        let node = t.node((idx as usize).into()).unwrap();
 
         for _x in node.children() {}
     }
 
     pub(crate) fn iter_parent(run: u64, t: Tree<u64>) {
         let idx = _get_parent_node(run);
-        let node = t.node(NodeId(idx as usize)).unwrap();
+        let node = t.node((idx as usize).into()).unwrap();
 
         for _x in node.children() {}
     }
