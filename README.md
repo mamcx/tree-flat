@@ -44,14 +44,14 @@ The iterators exploit these observations:
 So this means that in the case of navigating the children of `jhon_doe`:
 
 ```bash
-. Users					  ⇡ parents
-├── jhon_doe			   Index: 1, Level: 1
-					           ⇩ children start at 
-							jhon_doe + 1,
-							level 	 > jhon_doe
-├   ├── file1.rs				: Level 2 is child!
-├   ├── file2.rs				: Level 2 is child!
-├── jane_doe			        : Level 1 is below, stop!
+. Users			  ⇡ parents
+├── jhon_doe		Index: 1, Level: 1
+			  ⇩ children start at 
+				jhon_doe + 1,
+				level 	 > jhon_doe
+├   ├── file1.rs	: Level 2 is child!
+├   ├── file2.rs	: Level 2 is child!
+├── jane_doe		: Level 1 is below, stop!
 └────── cat.jpg
 ```
 
