@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::iter::IntoIter;
+use crate::iter::{IntoIter, TreeIter};
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 
@@ -40,13 +40,13 @@ impl<T: Debug> Tree<T> {
     /// This assumes you are pushing in pre-order!
     pub fn push_with_level(&mut self, data: T, level: usize, parent: NodeId) -> NodeId {
         let parent = parent.to_index();
-        let parent = if parent == 0 { 0 } else { parent - 1 };
+        //let parent = if parent == 0 { 0 } else { parent - 1 };
 
         self.data.push(data);
         self.level.push(level);
         self.parent.push(parent);
 
-        self.data.len().into()
+        (self.data.len() - 1).into()
     }
 
     pub(crate) fn _make_node(&self, id: NodeId) -> Node<T> {
@@ -57,8 +57,12 @@ impl<T: Debug> Tree<T> {
         }
     }
 
-    pub(crate) fn _make_node_mut(&mut self, id: NodeId) -> NodeMut<T> {
-        NodeMut { id, tree: self }
+    pub(crate) fn _make_node_mut(&mut self, id: NodeId, parent: NodeId) -> NodeMut<T> {
+        NodeMut {
+            id,
+            parent,
+            tree: self,
+        }
     }
 
     /// Get the [Node<T>] from his [NodeId]
@@ -78,7 +82,8 @@ impl<T: Debug> Tree<T> {
     /// Get a mutable [NodeMut<T>] from his [NodeId], so you can push children
     pub fn node_mut(&mut self, id: NodeId) -> Option<NodeMut<T>> {
         if id.to_index() < self.data.len() {
-            Some(self._make_node_mut(id))
+            let parent = self._make_node(id).parent().into();
+            Some(self._make_node_mut(id, parent))
         } else {
             None
         }
@@ -88,7 +93,7 @@ impl<T: Debug> Tree<T> {
     ///
     /// This always success
     pub fn root_mut(&mut self) -> NodeMut<T> {
-        self._make_node_mut(0.into())
+        self._make_node_mut(0.into(), 0.into())
     }
 
     pub fn len(&self) -> usize {
@@ -98,6 +103,9 @@ impl<T: Debug> Tree<T> {
         self.data.is_empty()
     }
 
+    pub fn iter(&self) -> TreeIter<'_, T> {
+        TreeIter { pos: 0, tree: self }
+    }
     pub fn into_iter(&self) -> IntoIter<T> {
         IntoIter { tree: self }
     }
@@ -121,7 +129,7 @@ impl<T: Debug> Tree<T> {
         if of.to_index() == 0 {
             0
         } else {
-            self.level[of.to_index() - 1]
+            self.level[of.to_index()]
         }
     }
 

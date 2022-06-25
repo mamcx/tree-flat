@@ -41,7 +41,7 @@ fn build() -> Tree<i32> {
 }
 
 fn sub_level(mut parent: NodeMut<usize>, num: &mut usize, count: usize) {
-    if parent.get_level() > 10 {
+    if parent.get_parent_level() > 10 {
         return;
     }
     *num += 1;
@@ -108,7 +108,7 @@ fn create_manual() {
     println!("{tree}");
 
     let mut tree = Tree::new(0);
-    let parent = tree.root_mut().id;
+    let parent = tree.root_mut().parent;
     tree.push_with_level(1, 1, parent);
     println!("{tree}");
 }

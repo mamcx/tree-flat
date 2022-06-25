@@ -48,7 +48,7 @@ fn walk_dir_manual(path: &str) -> io::Result<Tree<String>> {
 
 fn walk_dir(path: &str) -> io::Result<Tree<String>> {
     let mut tree = Tree::new(path.to_string());
-    let mut parent = tree.root_mut().id;
+    let mut parent = tree.root_mut().parent;
     for entry in WalkDir::new(path)
         .into_iter()
         .filter_entry(|f| !ignore(f.file_name()))

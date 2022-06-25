@@ -102,13 +102,15 @@ impl<T: Display> Display for Node<'_, T> {
 pub struct NodeMut<'a, T: 'a> {
     /// Node ID.
     pub id: NodeId,
+    /// Node ID of the parent.
+    pub parent: NodeId,
     /// Tree containing the node.
     pub tree: &'a mut Tree<T>,
 }
 
 impl<'a, T: Debug + 'a> NodeMut<'a, T> {
-    pub fn get_level(&self) -> usize {
-        self.tree.get_level(self.id)
+    pub fn get_parent_level(&self) -> usize {
+        self.tree.get_level(self.parent)
     }
 
     /// Create a new [Node<T>], record the parent & the loop, and continue to
@@ -118,17 +120,17 @@ impl<'a, T: Debug + 'a> NodeMut<'a, T> {
         T: Debug,
     {
         let id = self.append(data);
-        self.tree._make_node_mut(id)
+        self.tree._make_node_mut(id, id)
     }
 
     /// Create a new [Node<T>], record the parent & the loop, and
-    /// return [NodeId]
+    /// return the created [NodeId]
     pub fn append(&mut self, data: T) -> NodeId
     where
         T: Debug,
     {
-        let level = self.get_level() + 1;
+        let level = self.get_parent_level() + 1;
 
-        self.tree.push_with_level(data, level, self.id)
+        self.tree.push_with_level(data, level, self.parent)
     }
 }

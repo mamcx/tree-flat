@@ -3,8 +3,8 @@ use std::fmt::Debug;
 use crate::prelude::*;
 
 pub struct TreeIter<'a, T> {
-    pos: usize,
-    tree: &'a Tree<T>,
+    pub(crate) pos: usize,
+    pub(crate) tree: &'a Tree<T>,
 }
 
 impl<'a, T: Debug> Iterator for TreeIter<'a, T> {
