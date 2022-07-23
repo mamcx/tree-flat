@@ -10,7 +10,7 @@ use crate::prelude::*;
 ///
 /// Is not checked that the [NodeId] was not from *another* tree.
 ///
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NodeId(NonZeroUsize);
 
 impl NodeId {
