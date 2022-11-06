@@ -1,6 +1,6 @@
 [package]
 name = "tree-flat"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Mario Montoya <mamcx@elmalabarista.com>"]
 description = "TreeFlat is the simplest way to build & traverse a pre-order Tree for Rust."
 documentation = "https://docs.rs/tree-flat"
@@ -15,7 +15,7 @@ exclude = ["/.github"]
 [dependencies]
 
 [dev-dependencies]
-criterion =  { version = "0.3", default-features = false, features = ["cargo_bench_support", "html_reports"] }
+criterion =  { version = "0.4.0", default-features = false, features = ["cargo_bench_support", "plotters", "html_reports"] }
 ego-tree = "0.6.2"
 walkdir = "2.3.2"
 

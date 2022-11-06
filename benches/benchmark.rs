@@ -20,7 +20,7 @@ fn _get_child_node(run: u64) -> u64 {
         50 => 5_644,
         75 => 8_101,
         100 => 22_978,
-        _ => unreachable!(run),
+        _ => unreachable!("{}", run),
     }
 }
 
@@ -34,7 +34,7 @@ fn _get_parent_node(run: u64) -> u64 {
         50 => 12_843,
         75 => 27_693,
         100 => 48_168,
-        _ => unreachable!(run),
+        _ => unreachable!("{}", run),
     }
 }
 
@@ -61,7 +61,7 @@ fn _get_parent_node(run: u64) -> u64 {
 // ├   ├   ├   ├   ├   ├   ├   ├   ├   ├   ├── 19
 #[macro_export]
 macro_rules! hierarchy {
-    ($tree:ident,$node_mut:ident, $push:ident) => {
+    ($tree:ident, $root_mut:ident, $node_mut:ident, $push:ident) => {
         fn sub_level(mut parent: $node_mut<u64>, num: &mut u64, level: u64, count: u64) {
             if level > 10 {
                 return;
@@ -78,7 +78,7 @@ macro_rules! hierarchy {
 
         pub(crate) fn _create_hierarchy(n: u64) -> $tree<u64> {
             let mut tree = $tree::new(0);
-            let mut root = tree.root_mut();
+            let mut root = tree.$root_mut();
             let mut num = 1;
             for i in 0..=n {
                 let l1 = root.$push(num);
@@ -94,7 +94,7 @@ macro_rules! hierarchy {
 mod ego {
     use super::*;
 
-    hierarchy!(ETree, ENodeMut, append);
+    hierarchy!(ETree, root_mut, ENodeMut, append);
 
     pub(crate) fn create_hierarchy(n: u64) {
         _create_hierarchy(n);
@@ -131,7 +131,7 @@ mod ego {
 mod flat {
     use super::*;
 
-    hierarchy!(Tree, TreeMut, push);
+    hierarchy!(Tree, tree_root_mut, TreeMut, push);
 
     pub(crate) fn create_hierarchy(n: u64) {
         _create_hierarchy(n);
