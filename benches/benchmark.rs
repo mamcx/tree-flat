@@ -131,7 +131,7 @@ mod ego {
 mod flat {
     use super::*;
 
-    hierarchy!(Tree, NodeMut, push);
+    hierarchy!(Tree, TreeMut, push);
 
     pub(crate) fn create_hierarchy(n: u64) {
         _create_hierarchy(n);
@@ -158,7 +158,7 @@ mod flat {
     pub(crate) fn create(n: u64) {
         let mut tree = Tree::with_capacity(0, n as usize);
 
-        let mut root = tree.root_mut();
+        let mut root = tree.tree_root_mut();
 
         for i in 1..n {
             root.push(i);

@@ -19,7 +19,7 @@ use crate::prelude::*;
 fn build() -> Tree<i32> {
     let mut tree = Tree::with_capacity(0, 15);
 
-    let mut root = tree.root_mut();
+    let mut root = tree.tree_root_mut();
     root.push(1).push(2);
 
     let mut child3 = root.push(3);
@@ -40,7 +40,7 @@ fn build() -> Tree<i32> {
     tree
 }
 
-fn sub_level(mut parent: NodeMut<usize>, num: &mut usize, count: usize) {
+fn sub_level(mut parent: TreeMut<usize>, num: &mut usize, count: usize) {
     if parent.get_parent_level() > 10 {
         return;
     }
@@ -58,7 +58,7 @@ fn sub_level(mut parent: NodeMut<usize>, num: &mut usize, count: usize) {
 fn create_hierarchy() {
     let n = 100;
     let mut tree = Tree::new(0);
-    let mut root = tree.root_mut();
+    let mut root = tree.tree_root_mut();
     let mut num = 1;
     for i in 0..=n {
         let l1 = root.push(num);
@@ -87,8 +87,8 @@ fn create_push_direct() {
     let mut tree1 = Tree::with_capacity(0, 3);
     let mut tree2 = tree1.clone();
 
-    tree1.root_mut().push(1).push(3);
-    tree1.root_mut().push(2);
+    tree1.tree_root_mut().push(1).push(3);
+    tree1.tree_root_mut().push(2);
     println!("{tree1}");
     let parent = tree2.push_with_level(1, 1, 0.into());
     tree2.push_with_level(3, 2, parent);
@@ -102,13 +102,13 @@ fn create_push_direct() {
 fn create_manual() {
     let mut tree = Tree::new(0);
 
-    let mut root = tree.root_mut();
+    let mut root = tree.tree_root_mut();
     root.push(1);
 
     println!("{tree}");
 
     let mut tree = Tree::new(0);
-    let parent = tree.root_mut().parent;
+    let parent = tree.tree_root_mut().parent;
     tree.push_with_level(1, 1, parent);
     println!("{tree}");
 }

@@ -41,7 +41,7 @@ impl From<NodeId> for usize {
     }
 }
 
-/// A immutable view of the [Self::data] in the [Tree] with their [NodeId].
+/// An immutable view of the [Self::data] in the [Tree] with their [NodeId].
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Node<'a, T: 'a> {
     /// Node ID.
@@ -97,9 +97,30 @@ impl<T: Display> Display for Node<'_, T> {
     }
 }
 
+/// A mutable view of the [Self::data] in the [Tree] with their [NodeId].
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub struct NodeMut<'a, T: 'a> {
+    /// Node ID.
+    pub id: NodeId,
+    /// Data.
+    pub data: &'a mut T,
+}
+
+impl<T: Debug> Debug for NodeMut<'_, T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write! {f, "{:?}:{:?}", self.id, self.data}
+    }
+}
+
+impl<T: Display> Display for NodeMut<'_, T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write! {f, "{}", self.data}
+    }
+}
+
 /// A mutable reference in the [Tree] of the [NodeId].
 #[derive(Debug)]
-pub struct NodeMut<'a, T: 'a> {
+pub struct TreeMut<'a, T: 'a> {
     /// Node ID.
     pub id: NodeId,
     /// Node ID of the parent.
@@ -108,19 +129,19 @@ pub struct NodeMut<'a, T: 'a> {
     pub tree: &'a mut Tree<T>,
 }
 
-impl<'a, T: Debug + 'a> NodeMut<'a, T> {
+impl<'a, T: Debug + 'a> TreeMut<'a, T> {
     pub fn get_parent_level(&self) -> usize {
         self.tree.get_level(self.parent)
     }
 
     /// Create a new [Node<T>], record the parent & the loop, and continue to
     /// return [NodeMut<T>] so you can add more in a builder pattern
-    pub fn push(&mut self, data: T) -> NodeMut<T>
+    pub fn push(&mut self, data: T) -> TreeMut<T>
     where
         T: Debug,
     {
         let id = self.append(data);
-        self.tree._make_node_mut(id, id)
+        self.tree._make_tree_mut(id, id)
     }
 
     /// Create a new [Node<T>], record the parent & the loop, and

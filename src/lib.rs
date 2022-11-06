@@ -5,7 +5,7 @@
 //!
 //! **No extra fluff**, just a simple & performant one-trick pony.
 //!
-//! Note: The tree depends in the build order, so is not possible to re-order the tree
+//! Note: The tree depends on the build order, so is not possible to re-order the tree
 //! (changing parents or levels) in different order. So, for example, you can't add
 //! a branch later to one in the *middle* (only can add *after* the end...).
 //!
@@ -33,9 +33,9 @@
 //! This allows for the performance of [Vec], on the most common operations
 //! (critically: Push items + Iterate), and very efficient iterations of
 //! [node::Node::parents]/[node::Node::children]/[node::Node::siblings], because
-//! it just traverse the flat vectors.
+//! it just traverses the flat vectors.
 //!
-//! The iterators exploit this observations:
+//! The iterators exploit these observations:
 //!
 //! * The children are at the right/up of the parent
 //! * The parents are at the left/down of the children
@@ -47,7 +47,7 @@
 //!
 //! let mut tree = Tree::with_capacity("Users", 6);
 //!
-//! let mut root = tree.root_mut();
+//! let mut root = tree.tree_root_mut();
 //!
 //! let mut child = root.push("jhon_doe");
 //! child.push("file1.rs");
@@ -66,7 +66,7 @@
 //! //Pretty print the tree
 //! println!("{}", tree);
 //!
-//! //Iterations is as inserted:
+//! //Iterations are as inserted:
 //! for f in &tree {
 //!   dbg!(f);
 //! }
@@ -90,7 +90,7 @@ pub mod tree;
 /// Import this module for easy access to the Flat-tree
 pub mod prelude {
     pub use crate::iter;
-    pub use crate::node::{Node, NodeId, NodeMut};
+    pub use crate::node::{Node, NodeId, NodeMut, TreeMut};
     pub use crate::tree;
     pub use crate::tree::Tree;
 }

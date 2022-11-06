@@ -16,7 +16,7 @@ fn ignore(s: &OsStr) -> bool {
     path == "target" || path.starts_with(".")
 }
 
-fn _walk_dir_manual(mut parent: NodeMut<String>, of: ReadDir) -> io::Result<()> {
+fn _walk_dir_manual(mut parent: TreeMut<String>, of: ReadDir) -> io::Result<()> {
     for entry in of {
         let entry = entry?;
         let path = path_to_str(entry.path());
@@ -39,7 +39,7 @@ fn _walk_dir_manual(mut parent: NodeMut<String>, of: ReadDir) -> io::Result<()> 
 fn walk_dir_manual(path: &str) -> io::Result<Tree<String>> {
     let mut tree = Tree::new(path.into());
 
-    let root = tree.root_mut();
+    let root = tree.tree_root_mut();
     //We start the recursive traversing...
     _walk_dir_manual(root, fs::read_dir(path)?)?;
     println!("{}", &tree);
@@ -48,7 +48,7 @@ fn walk_dir_manual(path: &str) -> io::Result<Tree<String>> {
 
 fn walk_dir(path: &str) -> io::Result<Tree<String>> {
     let mut tree = Tree::new(path.to_string());
-    let mut parent = tree.root_mut().parent;
+    let mut parent = tree.tree_root_mut().parent;
     for entry in WalkDir::new(path)
         .into_iter()
         .filter_entry(|f| !ignore(f.file_name()))

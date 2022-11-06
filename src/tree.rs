@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use crate::iter::{IntoIter, TreeIter};
+use crate::node::NodeMut;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 
@@ -57,11 +58,34 @@ impl<T: Debug> Tree<T> {
         }
     }
 
-    pub(crate) fn _make_node_mut(&mut self, id: NodeId, parent: NodeId) -> NodeMut<T> {
+    pub(crate) fn _make_node_mut(&mut self, id: NodeId) -> NodeMut<T> {
         NodeMut {
+            id,
+            data: &mut self.data[id.to_index()],
+        }
+    }
+
+    pub(crate) fn _make_tree_mut(&mut self, id: NodeId, parent: NodeId) -> TreeMut<T> {
+        TreeMut {
             id,
             parent,
             tree: self,
+        }
+    }
+
+    /// Get a mutable [TreeMut<T>] handle of the root, so you can push children
+    ///
+    /// This always success
+    pub fn tree_root_mut(&mut self) -> TreeMut<T> {
+        self._make_tree_mut(0.into(), 0.into())
+    }
+
+    /// Get a mutable [TreeMut<T>] from his [NodeId], so you can push children
+    pub fn tree_node_mut(&mut self, id: NodeId) -> Option<TreeMut<T>> {
+        if id.to_index() < self.data.len() {
+            Some(self._make_tree_mut(id, 0.into()))
+        } else {
+            None
         }
     }
 
@@ -79,21 +103,20 @@ impl<T: Debug> Tree<T> {
         self._make_node(0.into())
     }
 
-    /// Get a mutable [NodeMut<T>] from his [NodeId], so you can push children
+    /// Get a mutable [NodeMut<T>] from his [NodeId].
     pub fn node_mut(&mut self, id: NodeId) -> Option<NodeMut<T>> {
         if id.to_index() < self.data.len() {
-            let parent = self._make_node(id).parent().into();
-            Some(self._make_node_mut(id, parent))
+            Some(self._make_node_mut(id))
         } else {
             None
         }
     }
 
-    /// Get a mutable [NodeMut<T>] handle of the root, so you can push children
+    /// Get a mutable [NodeMut<T>] handle of the root.
     ///
     /// This always success
-    pub fn root_mut(&mut self) -> NodeMut<T> {
-        self._make_node_mut(0.into(), 0.into())
+    pub fn root_mut(&mut self) -> NodeMut<'_, T> {
+        self._make_node_mut(0.into())
     }
 
     pub fn len(&self) -> usize {
