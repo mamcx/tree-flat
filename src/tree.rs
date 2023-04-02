@@ -34,6 +34,139 @@ impl<T: Debug> Tree<T> {
         t
     }
 
+    /// Returns the total number of elements the tree can hold without reallocating.
+    pub fn capacity(&self) -> usize {
+        self.data.capacity() // Any of the three underlying vectors is good enough.
+    }
+
+    /// Reserves capacity for at least `additional` more elements to be inserted
+    /// in the given `Tree<T>`. The collection may reserve more space to
+    /// speculatively avoid frequent reallocations. After calling `reserve`,
+    /// capacity will be greater than or equal to `self.len() + additional`.
+    /// Does nothing if capacity is already sufficient.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the new capacity exceeds `isize::MAX` bytes.
+    pub fn reserve(&mut self, additional: usize) {
+        self.data.reserve(additional);
+        self.level.reserve(additional);
+        self.parent.reserve(additional);
+    }
+
+    /// Reserves the minimum capacity for at least `additional` more elements to
+    /// be inserted in the given `Tree<T>`. Unlike [`reserve`], this will not
+    /// deliberately over-allocate to speculatively avoid frequent allocations.
+    /// After calling `reserve_exact`, capacity will be greater than or equal to
+    /// `self.len() + additional`. Does nothing if the capacity is already
+    /// sufficient.
+    ///
+    /// Note that the allocator may give the collection more space than it
+    /// requests. Therefore, capacity can not be relied upon to be precisely
+    /// minimal. Prefer [`reserve`] if future insertions are expected.
+    ///
+    /// [`reserve`]: Tree::reserve
+    ///
+    /// # Panics
+    ///
+    /// Panics if the new capacity exceeds `isize::MAX` bytes.
+    pub fn reserve_exact(&mut self, additional: usize) {
+        self.data.reserve_exact(additional);
+        self.level.reserve_exact(additional);
+        self.parent.reserve_exact(additional);
+    }
+
+    /// Tries to reserve capacity for at least `additional` more elements to be inserted
+    /// in the given `Tree<T>`. The collection may reserve more space to speculatively avoid
+    /// frequent reallocations. After calling `try_reserve`, capacity will be
+    /// greater than or equal to `self.len() + additional` if it returns
+    /// `Ok(())`. Does nothing if capacity is already sufficient. This method
+    /// preserves the contents even if an error occurs.
+    ///
+    /// # Errors
+    ///
+    /// If the capacity overflows, or the allocator reports a failure, then an error
+    /// is returned.
+    pub fn try_reserve(
+        &mut self,
+        additional: usize,
+    ) -> Result<(), std::collections::TryReserveError> {
+        self.data.try_reserve(additional)?;
+        self.level.try_reserve(additional)?;
+        self.parent.try_reserve(additional)
+    }
+
+    /// Tries to reserve the minimum capacity for at least `additional`
+    /// elements to be inserted in the given `Tree<T>`. Unlike [`try_reserve`],
+    /// this will not deliberately over-allocate to speculatively avoid frequent
+    /// allocations. After calling `try_reserve_exact`, capacity will be greater
+    /// than or equal to `self.len() + additional` if it returns `Ok(())`.
+    /// Does nothing if the capacity is already sufficient.
+    ///
+    /// Note that the allocator may give the collection more space than it
+    /// requests. Therefore, capacity can not be relied upon to be precisely
+    /// minimal. Prefer [`try_reserve`] if future insertions are expected.
+    ///
+    /// [`try_reserve`]: Tree::try_reserve
+    ///
+    /// # Errors
+    ///
+    /// If the capacity overflows, or the allocator reports a failure, then an error
+    /// is returned.
+    pub fn try_reserve_exact(
+        &mut self,
+        additional: usize,
+    ) -> Result<(), std::collections::TryReserveError> {
+        self.data.try_reserve_exact(additional)?;
+        self.level.try_reserve_exact(additional)?;
+        self.parent.try_reserve_exact(additional)
+    }
+
+    /// Shrinks the capacity of the tree as much as possible.
+    ///
+    /// It will drop down as close as possible to the length but the allocator
+    /// may still inform the tree that there is space for a few more elements.
+    pub fn shrink_to_fit(&mut self) {
+        if self.capacity() > self.len() {
+            self.data.shrink_to_fit();
+            self.level.shrink_to_fit();
+            self.parent.shrink_to_fit();
+        }
+    }
+
+    /// Shrinks the capacity of the tree with a lower bound.
+    ///
+    /// The capacity will remain at least as large as both the length
+    /// and the supplied value.
+    ///
+    /// If the current capacity is less than the lower limit, this is a no-op.
+    pub fn shrink_to(&mut self, min_capacity: usize) {
+        if self.capacity() > min_capacity {
+            self.data.shrink_to(min_capacity);
+            self.level.shrink_to(min_capacity);
+            self.parent.shrink_to(min_capacity);
+        }
+    }
+
+    /// Shortens the tree, keeping the first `len` elements and dropping
+    /// the rest.
+    ///
+    /// If `len` is greater than the tree's current length, this has no
+    /// effect.
+    ///
+    /// The [`drain`] method can emulate `truncate`, but causes the excess
+    /// elements to be returned instead of dropped.
+    ///
+    /// Note that this method has no effect on the allocated capacity
+    /// of the tree.
+    ///
+    /// [`drain`]: Tree::drain
+    pub fn truncate(&mut self, len: usize) {
+        self.data.truncate(len);
+        self.level.truncate(len);
+        self.parent.truncate(len);
+    }
+
     /// Push a node into the tree
     ///
     /// #WARNING
@@ -71,6 +204,79 @@ impl<T: Debug> Tree<T> {
             parent,
             tree: self,
         }
+    }
+
+    /// Removes the last element from a tree and returns it as a triple
+    /// `(data: T, level: usize, parent: NodeId)`, or [`None`] if it
+    /// is empty.
+    #[inline]
+    pub fn pop(&mut self) -> Option<(T, usize, NodeId)> {
+        if let Some(data) = self.data.pop() {
+            let level = self.level.pop().unwrap();
+            let parent = self.parent.pop().unwrap().into();
+            Some((data, level, parent))
+        } else {
+            None
+        }
+    }
+
+    /// Removes the specified range from the tree in bulk, returning all
+    /// removed elements as an iterator. If the iterator is dropped before
+    /// being fully consumed, it drops the remaining removed elements.
+    ///
+    /// The returned iterator keeps a mutable borrow on the tree to optimize
+    /// its implementation.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the starting point is greater than the end point or if
+    /// the end point is greater than the length of the vector.
+    ///
+    /// # Leaking
+    ///
+    /// If the returned iterator goes out of scope without being dropped (due to
+    /// [`mem::forget`], for example), the tree may have lost and leaked
+    /// elements arbitrarily, including elements outside the range.
+    //
+    // # Implementation
+    //
+    // The return type may be specialized as in `std::vec::Drain`, implementing more traits.
+    pub fn drain<R>(&mut self, range: R) -> impl Iterator<Item = (T, usize, NodeId)> + '_
+    where
+        R: std::ops::RangeBounds<usize> + Clone,
+    {
+        let mut data_drain = self.data.drain(range.clone());
+        let mut level_drain = self.level.drain(range.clone());
+        let mut parent_drain = self.parent.drain(range);
+        std::iter::from_fn(move || match data_drain.next() {
+            Some(data) => {
+                let level = level_drain.next().unwrap();
+                let parent = parent_drain.next().unwrap().into();
+                Some((data, level, parent))
+            }
+            None => None,
+        })
+    }
+
+    /// Clears the tree, removing all values.
+    ///
+    /// Note that this method has no effect on the allocated capacity
+    /// of the tree.
+    #[inline]
+    pub fn clear(&mut self) {
+        self.data.clear();
+        self.level.clear();
+        self.parent.clear();
+    }
+
+    /// Returns the number of elements in the tree, also referred to as its ‘length’.
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+
+    /// Returns `true` if the vector contains no elements.
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
     }
 
     /// Get a mutable [TreeMut<T>] handle of the root, so you can push children
@@ -117,13 +323,6 @@ impl<T: Debug> Tree<T> {
     /// This always success
     pub fn root_mut(&mut self) -> NodeMut<'_, T> {
         self._make_node_mut(0.into())
-    }
-
-    pub fn len(&self) -> usize {
-        self.data.len()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.data.is_empty()
     }
 
     pub fn iter(&self) -> TreeIter<'_, T> {
@@ -186,7 +385,7 @@ impl<T: Debug> Tree<T> {
             let mut col = String::with_capacity(level * 2);
             for _i in 1..level {
                 match pos.cmp(&last) {
-                    Ordering::Greater => branch.push_str(&*"──".repeat(level)),
+                    Ordering::Greater => branch.push_str(&"──".repeat(level)),
                     Ordering::Less => col.push_str("├   "),
                     Ordering::Equal => branch.push_str("──"),
                 }
