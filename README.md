@@ -63,7 +63,7 @@ use tree_flat::prelude::*;
 
 let mut tree = Tree::with_capacity("Users", 6);
 
-let mut root = tree.root_mut();
+let mut root = tree.tree_root_mut();
 
 let mut child = root.push("jhon_doe");
 child.push("file1.rs");
